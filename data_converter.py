@@ -83,3 +83,14 @@ def loopDataPAR():
     while True:
         writePAR()
         time.sleep(1)
+
+def resetTTNdata():
+    file = open("datattn", "r+")
+    file.truncate(0)
+    file.close()
+    file = open("datattn", "a")
+    file.write("0,"+timex.getTime()+'\n')
+    time.sleep(1)
+    file.write("0,"+timex.getTime()+'\n')
+    file.close()
+    time.sleep(1)

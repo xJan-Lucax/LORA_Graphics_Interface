@@ -2,6 +2,7 @@ import matplotlib
 
 import data_converter
 import timex
+import ttndata
 
 from datetime import datetime
 
@@ -25,6 +26,10 @@ def tmpData():
     data_converter.loopDataTMP()
 def parData():
     data_converter.loopDataPAR()
+
+def checkDatattnLoop():
+    #data_converter.resetTTNdata()
+    ttndata.ttndatacheck()
 
 LARGE_FONT = ("Verdana", 12)
 style.use("ggplot")
@@ -67,7 +72,7 @@ def animateTemperature(i):
     temperaturegraphsub.plot_date(dates, yar, linestyle ='dotted')
 
 def animateParticle(i):
-    pullData = open('datapar','r').read()
+    pullData = open('datattn','r').read()
     dataArray = pullData.split('\n')
     xar=[]
     yar=[]
@@ -161,7 +166,7 @@ class particle_graph_page(tk.Frame):
         button1.pack()
 
         button2 = ttk.Button(self, text="Reset",
-                             command=lambda: data_converter.resetPARdata())
+                             command=lambda: data_converter.resetTTNdata())
         button2.pack()
 
         canvas = FigureCanvasTkAgg(particlegraph, self)
@@ -193,6 +198,9 @@ tmpThread = threading.Thread(target=tmpData, daemon=True)
 tmpThread.start()
 parThread = threading.Thread(target=parData, daemon=True)
 parThread.start()
+ttnThread = threading.Thread(target=checkDatattnLoop, daemon=True)
+ttnThread.start()
+
 app = LORA_Graphics_Interface()
 anico2 = animation.FuncAnimation(co2graph, animateCo2, interval=1000)
 anitmp = animation.FuncAnimation(temperaturegraph, animateTemperature, interval=1000)

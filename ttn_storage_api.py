@@ -57,7 +57,7 @@ def sensor_pull_storage(appname, accesskey, timestring, *,data_folder = None, tt
 	"""
 	args = [ "curl" ]
 	if ttn_version == 2:
-		print("TTN 2")
+		#print("TTN 2")
 		args += [
 			"-X", "GET",
 			"--header", "Accept: application/json",
@@ -65,7 +65,7 @@ def sensor_pull_storage(appname, accesskey, timestring, *,data_folder = None, tt
 			f"https://{appname}.data.thethingsnetwork.org/api/v2/query?last={timestring}"
 			]
 	elif ttn_version == 3:
-		print("TTN 3")
+		#print("TTN 3")
 		args += [
 			"-G", f"https://eu1.cloud.thethings.network/api/v3/as/applications/{appname}/packages/storage/uplink_message",
 			"--header", f"Authorization: Bearer {accesskey}",
@@ -89,8 +89,8 @@ def sensor_pull_storage(appname, accesskey, timestring, *,data_folder = None, tt
 
 	sresult = result.stdout
 	if ttn_version == 3:
-		print("v3 results")
-		print(list(map(json.loads, re.sub(r'\n+', '\n', sresult.decode()).splitlines())))
+		#print("v3 results")
+		#print(list(map(json.loads, re.sub(r'\n+', '\n', sresult.decode()).splitlines())))
 		return list(map(json.loads, re.sub(r'\n+', '\n', sresult.decode()).splitlines()))
 	else:
 		return sresult
