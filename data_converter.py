@@ -57,3 +57,29 @@ def loopDataTMP():
         writeTMP()
         time.sleep(1)
 
+def getDataPAR():
+    tmp = random.randint(0,1000)
+    print(tmp)
+    return tmp
+
+def writePAR():
+    f = open("datapar", "a")
+    a = str(getDataCO2())
+    b = ","
+    c = str(timex.getTime())
+    f.write(a+b+c+'\n')
+    f.close
+
+def resetPARdata():
+    file = open("datapar", "r+")
+    file.truncate(0)
+    file.close()
+    time.sleep(1)
+
+def loopDataPAR():
+    file = open("datapar", "r+")
+    file.truncate(0)
+    file.close()
+    while True:
+        writePAR()
+        time.sleep(1)
