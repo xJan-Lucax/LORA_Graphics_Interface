@@ -10,6 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg #NavigationToolb
 from matplotlib.figure import Figure
 import matplotlib.animation as animation
 from matplotlib import style
+import matplotlib.dates
 
 import tkinter as tk
 from tkinter import ttk
@@ -17,18 +18,23 @@ from tkinter import ttk
 
 import threading
 
-def co2Data(name):
-    data_converter.loopData()
+#Threads zur Datenerfassung
+def co2Data():
+    data_converter.loopDataCo2()
+def tmpData():
+    data_converter.loopDataTMP()
+
 
 LARGE_FONT = ("Verdana", 12)
 style.use("ggplot")
 
-f = Figure(figsize=(5, 5), dpi=100)
-a = f.add_subplot(111)
+co2graph = Figure(figsize=(5, 5), dpi=100)
+co2graphsub = co2graph.add_subplot(111)
 
-pullDataold = []
+temperaturegraph = Figure(figsize=(5, 5), dpi=100)
+temperaturegraphsub = temperaturegraph.add_subplot(111)
 
-def animate(i):
+def animateCo2(i):
     pullData = open('dataco2','r').read()
     dataArray = pullData.split('\n')
     xar=[]
@@ -36,21 +42,38 @@ def animate(i):
     for eachLine in dataArray:
         if len(eachLine)>1:
             y,x = eachLine.split(',')
-            xar.append(int(x))
+            x = datetime.strptime(x, "%Y%m%d%H%M%S")
+            xar.append(x)
+            dates = matplotlib.dates.date2num(xar)
             yar.append(int(y))
-    a.clear()
-    a.plot(xar,yar)
+
+    co2graphsub.clear()
+    co2graphsub.plot_date(dates, yar, linestyle ='dotted')
+
+def animateTemperature(i):
+    pullData = open('datatemperatur','r').read()
+    dataArray = pullData.split('\n')
+    xar=[]
+    yar=[]
+    for eachLine in dataArray:
+        if len(eachLine)>1:
+            y,x = eachLine.split(',')
+            x = datetime.strptime(x, "%Y%m%d%H%M%S")
+            xar.append(x)
+            dates = matplotlib.dates.date2num(xar)
+            yar.append(int(y))
+
+    temperaturegraphsub.clear()
+    temperaturegraphsub.plot_date(dates, yar, linestyle ='dotted')
 
 
 
-
-class SeaofBTCapp(tk.Tk):
+class LORA_Graphics_Interface(tk.Tk):
 
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
 
-        #tk.Tk.iconbitmap(self, default="clienticon.ico")
-        tk.Tk.wm_title(self, "Sea of BTC client")
+        tk.Tk.wm_title(self, "LORA_Graphics_Interface")
 
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
@@ -59,7 +82,7 @@ class SeaofBTCapp(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, PageOne, PageTwo, PageThree):
+        for F in (StartPage, temperture_graph_page, particle_graph_page, co2_graph_page):
             frame = F(container, self)
 
             self.frames[F] = frame
@@ -80,36 +103,40 @@ class StartPage(tk.Frame):
         label = tk.Label(self, text="Start Page", font=LARGE_FONT)
         label.pack(pady=10, padx=10)
 
-        button = ttk.Button(self, text="Visit Page 1",
-                            command=lambda: controller.show_frame(PageOne))
+        button = ttk.Button(self, text="Temperatur Sensor Graphische Auswertung",
+                            command=lambda: controller.show_frame(temperture_graph_page))
         button.pack()
 
         button2 = ttk.Button(self, text="Visit Page 2",
-                             command=lambda: controller.show_frame(PageTwo))
+                             command=lambda: controller.show_frame(particle_graph_page))
         button2.pack()
 
-        button3 = ttk.Button(self, text="Graph Page",
-                             command=lambda: controller.show_frame(PageThree))
+        button3 = ttk.Button(self, text="CO2 Sensor Graphische Auswertung",
+                             command=lambda: controller.show_frame(co2_graph_page))
         button3.pack()
 
 
-class PageOne(tk.Frame):
+class temperture_graph_page(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Page One!!!", font=LARGE_FONT)
+        label = tk.Label(self, text="Temperatur Sensor Graphische Auswertung", font=LARGE_FONT)
         label.pack(pady=10, padx=10)
 
         button1 = ttk.Button(self, text="Back to Home",
                              command=lambda: controller.show_frame(StartPage))
         button1.pack()
 
-        button2 = ttk.Button(self, text="Page Two",
-                             command=lambda: controller.show_frame(PageTwo))
+        button2 = ttk.Button(self, text="Reset",
+                             command=lambda: data_converter.resetTMPdata())
         button2.pack()
 
+        canvas = FigureCanvasTkAgg(temperaturegraph, self)
+        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-class PageTwo(tk.Frame):
+
+class particle_graph_page(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -121,31 +148,34 @@ class PageTwo(tk.Frame):
         button1.pack()
 
         button2 = ttk.Button(self, text="Page One",
-                             command=lambda: controller.show_frame(PageOne))
+                             command=lambda: controller.show_frame(temperture_graph_page))
         button2.pack()
 
 
-class PageThree(tk.Frame):
+class co2_graph_page(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Graph Page!", font=LARGE_FONT)
+        label = tk.Label(self, text="CO2 Sensor Graphische Auswertung", font=LARGE_FONT)
         label.pack(pady=10, padx=10)
 
         button1 = ttk.Button(self, text="Back to Home",
                              command=lambda: controller.show_frame(StartPage))
+        button2 = ttk.Button(self, text="RESET",
+                             command=lambda: data_converter.resetCO2data())
         button1.pack()
+        button2.pack()
 
-        canvas = FigureCanvasTkAgg(f, self)
+        canvas = FigureCanvasTkAgg(co2graph, self)
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
-
-        #toolbar = NavigationToolbar2TkAgg(canvas, self)
-        #toolbar.update()
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
 
-x = threading.Thread(target=co2Data, args=(1,))
-x.start()
-app = SeaofBTCapp()
-ani = animation.FuncAnimation(f, animate, interval=1000)
+co2Thread = threading.Thread(target=co2Data, daemon=True)
+co2Thread.start()
+tmpThread = threading.Thread(target=tmpData, daemon=True)
+tmpThread.start()
+app = LORA_Graphics_Interface()
+anico2 = animation.FuncAnimation(co2graph, animateCo2, interval=1000)
+anitmp = animation.FuncAnimation(temperaturegraph, animateTemperature, interval=1000)
 app.mainloop()
